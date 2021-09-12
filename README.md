@@ -16,6 +16,7 @@ O pitch do nosso projeto pode ser encontrado aqui:
 
 ## Desenvolvimento
 O nosso projeto foi desenvolvido utilizando Java a partir das bibliotecas [Discord4J](https://github.com/Discord4J/Discord4J) e [LavaPlayer](https://github.com/sedmelluq/lavaplayer).
+Para adicioná-lo ao seu server, acesse o link https://discord.com/api/oauth2/authorize?client_id=886255165894705152&permissions=36702208&scope=bot.
 
 ## Comandos
 
