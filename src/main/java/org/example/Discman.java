@@ -18,10 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-interface Command {
-    void execute(MessageCreateEvent event);
-};
-
 public class Discman {
 
     private static final Map<String, Command> commands = new HashMap<>();
@@ -45,6 +41,9 @@ public class Discman {
 
         // Allow playerManager to parse remote sources like YouTube links
         AudioSourceManagers.registerRemoteSources(playerManager);
+
+        // Allow playerManager to parse local sources like .mp3 files
+        AudioSourceManagers.registerLocalSource(playerManager);
 
         // Create an AudioPlayer so Discord4J can receive audio data
         final AudioPlayer player = playerManager.createPlayer();
@@ -74,7 +73,7 @@ public class Discman {
         commands.put("play", event -> {
             final String content = event.getMessage().getContent();
             final List<String> command = Arrays.asList(content.split(" "));
-            playerManager.loadItem(command.get(1), scheduler);
+            playerManager.loadItem(command.get(1), scheduler);e
         });
 
         final GatewayDiscordClient client = DiscordClientBuilder.create(args[0]).build()
@@ -92,7 +91,11 @@ public class Discman {
                     for (final Map.Entry<String, Command> entry : commands.entrySet()) {
                         // We will be using ! as our "prefix" to any command in the system.
                         if (content.startsWith('!' + entry.getKey())) {
-                            entry.getValue().execute(event);
+                            try {
+                                entry.getValue().execute(event);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                             break;
                         }
                     }
