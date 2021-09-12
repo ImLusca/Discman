@@ -13,14 +13,12 @@ import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.channel.VoiceChannel;
 import discord4j.voice.AudioProvider;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-interface Command {
-    void execute(MessageCreateEvent event);
-};
+import java.util.concurrent.TimeUnit;
 
 public class Discman {
 
@@ -33,6 +31,10 @@ public class Discman {
     }
 
     public static void main(String[] args) {
+        String path = "C:\\Users\\gabri\\Documents\\Hackathons\\discman\\tracks\\";
+        final File folder = new File(path);
+        FileFinder.listFilesFromFolder(folder);
+
         // Creates AudioPlayer instances and translates URLs to AudioTrack instances
         final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 
@@ -45,6 +47,9 @@ public class Discman {
 
         // Allow playerManager to parse remote sources like YouTube links
         AudioSourceManagers.registerRemoteSources(playerManager);
+
+        // Allow playerManager to parse local sources like .mp3 files
+        AudioSourceManagers.registerLocalSource(playerManager);
 
         // Create an AudioPlayer so Discord4J can receive audio data
         final AudioPlayer player = playerManager.createPlayer();
@@ -74,7 +79,33 @@ public class Discman {
         commands.put("play", event -> {
             final String content = event.getMessage().getContent();
             final List<String> command = Arrays.asList(content.split(" "));
-            playerManager.loadItem(command.get(1), scheduler);
+            // playerManager.loadItem(command.get(1), scheduler);
+            // playerManager.loadItem("./tracks/R.E.M. – Everybody Hurts.mp3", scheduler);
+            List<String> files = FileFinder.finder(command.get(1).toLowerCase().replaceAll(" ", ""));
+            System.out.println(files);
+            if (files.size() == 1)
+                playerManager.loadItem(path + files.get(0), scheduler);
+            else if (files.size() > 1){
+                String message = "Há múltiplas músicas com esse nome. Especifique melhor.\n";
+                for (int i = 0; i < files.size() && i < 15; i++) {
+                    message += "\t • " + files.get(i) + "\n";
+                }
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message).block();
+            }
+            else {
+                String message1 = "O QUE VOCÊ FEZZZZ??? ESTÁ BOTANDO FUNK??? MÚSICA ATUAIS????";
+                String message2 = "Você vai sofrer e eu não vou ter pena. É melhor você cobrir seus ouvidos...\nyou know the rules and so do i...";
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message1).block();
+                TimeUnit.MILLISECONDS.sleep(2000);
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message2).block();
+                playerManager.loadItem(path + "RickAstley-NeverGonnaGiveYouUp.mp3", scheduler);
+            }
         });
 
         final GatewayDiscordClient client = DiscordClientBuilder.create(args[0]).build()
@@ -92,7 +123,11 @@ public class Discman {
                     for (final Map.Entry<String, Command> entry : commands.entrySet()) {
                         // We will be using ! as our "prefix" to any command in the system.
                         if (content.startsWith('!' + entry.getKey())) {
-                            entry.getValue().execute(event);
+                            try {
+                                entry.getValue().execute(event);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                             break;
                         }
                     }
