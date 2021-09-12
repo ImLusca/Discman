@@ -12,7 +12,9 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.channel.VoiceChannel;
 import discord4j.voice.AudioProvider;
+import discord4j.voice.VoiceConnection;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,10 @@ public class Discman {
     }
 
     public static void main(String[] args) {
+        String path = "C:\\Users\\gabri\\Documents\\Hackathons\\discman\\tracks\\";
+        final File folder = new File(path);
+        FileFinder.listFilesFromFolder(folder);
+
         // Creates AudioPlayer instances and translates URLs to AudioTrack instances
         final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 
@@ -39,8 +45,8 @@ public class Discman {
         playerManager.getConfiguration()
                 .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
 
-        // Allow playerManager to parse remote sources like YouTube links
-        AudioSourceManagers.registerRemoteSources(playerManager);
+        // Allow playerManager to parse local sources like .mp3 files
+        AudioSourceManagers.registerLocalSource(playerManager);
 
         // Allow playerManager to parse local sources like .mp3 files
         AudioSourceManagers.registerLocalSource(playerManager);
@@ -51,6 +57,18 @@ public class Discman {
         // We will be creating LavaPlayerAudioProvider in the next step
         AudioProvider provider = new LavaPlayerAudioProvider(player);
 
+        commands.put("help", event -> {
+            String message = """
+                    Commands:
+                    \t •**!help**: show commands
+                    \t •**!join**: bot enters voice channel
+                    \t •**!leave**: bot leaves voice channel
+                    \t •**!play**: <song name>: bot plays song""";
+            event.getMessage()
+                    .getChannel().block()
+                    .createMessage(message).block();
+        });
+
         commands.put("join", event -> {
             final Member member = event.getMember().orElse(null);
             event.getMessage()
@@ -60,10 +78,21 @@ public class Discman {
                 final VoiceState voiceState = member.getVoiceState().block();
                 if (voiceState != null) {
                     final VoiceChannel channel = voiceState.getChannel().block();
-                    if (channel != null) {
-                        // join returns a VoiceConnection which would be required if we were
-                        // adding disconnection features, but for now we are just ignoring it.
+                    if (channel != null)
                         channel.join(spec -> spec.setProvider(provider)).block();
+                }
+            }
+        });
+
+        commands.put("leave", event -> {
+            final Member member = event.getMember().orElse(null);
+            if (member != null) {
+                final VoiceState voiceState = member.getVoiceState().block();
+                if (voiceState != null) {
+                    final VoiceChannel channel = voiceState.getChannel().block();
+                    if (channel != null) {
+                        final VoiceConnection connection = channel.getVoiceConnection().block();
+                        connection.disconnect().block();
                     }
                 }
             }
@@ -73,7 +102,30 @@ public class Discman {
         commands.put("play", event -> {
             final String content = event.getMessage().getContent();
             final List<String> command = Arrays.asList(content.split(" "));
-            playerManager.loadItem(command.get(1), scheduler);e
+            List<String> files = FileFinder.finder(command.get(1).toLowerCase().replaceAll(" ", ""));
+            if (files.size() == 1)
+                playerManager.loadItem(path + files.get(0), scheduler);
+            else if (files.size() > 1){
+                StringBuilder message = new StringBuilder("Há múltiplas músicas com esse nome. Especifique melhor.\n");
+                for (int i = 0; i < files.size() && i < 15; i++) {
+                    message.append("\t • ").append(files.get(i)).append("\n");
+                }
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message.toString()).block();
+            }
+            else {
+                String message1 = "O QUE VOCÊ FEZZZZ??? ESTÁ BOTANDO FUNK??? MÚSICAS ATUAIS????";
+                String message2 = "Você vai sofrer e eu não vou ter pena. É melhor você cobrir seus ouvidos...\nyou know the rules and so do i...";
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message1).block();
+                Thread.sleep(1500);
+                event.getMessage()
+                        .getChannel().block()
+                        .createMessage(message2).block();
+                playerManager.loadItem(path + "RickAstley-NeverGonnaGiveYouUp.mp3", scheduler);
+            }
         });
 
         final GatewayDiscordClient client = DiscordClientBuilder.create(args[0]).build()
