@@ -15,3 +15,19 @@ O pitch do nosso projeto pode ser encontrado aqui:
 
 ## Desenvolvimento
 O nosso projeto foi desenvolvido utilizando Java a partir das bibliotecas [Discord4J](https://github.com/Discord4J/Discord4J) e [LavaPlayer](https://github.com/sedmelluq/lavaplayer).
+
+## Comandos
+
+* **!help**: mostra os comandos disponíveis do bot
+* **!join**: o bot junta-se ao canal de voz de quem executou o comando
+* **!leave**: o bot sai do canal de voz
+* **!play &lt;song&gt;**: o bot toca a música desejada
+
+## Agradecimentos
+Queremos agradecer a coordenação do HackFools e aos mentores pela ajuda e pela dedicação em fazer um hackathon memorável como esse.
+
+## Membros
+* [Gabriel Freitas](https://github.com/kibonusp)
+* [Raíssa Barreira](https://github.com/rtbarreira)
+* [Lucas Pereira](https://github.com/ImLusca)
+* [João Antônio Mantovani](https://github.com/Joaomantovani32)
